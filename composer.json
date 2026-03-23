@@ -1,0 +1,13 @@
+{
+    "require": {},
+    "autoload": {
+        "psr-4": {
+            "App\\": "app/",
+            "Veepee\\PricingDiscovery\\": "src/PricingDiscovery/",
+            "Veepee\\RiskModeling\\": "src/RiskModeling/",
+            "Veepee\\MarketIngestion\\": "src/MarketIngestion/",
+            "Veepee\\FiscalValidation\\": "src/FiscalValidation/",
+            "Veepee\\Shared\\": "src/Shared/"
+        }
+    }
+}
