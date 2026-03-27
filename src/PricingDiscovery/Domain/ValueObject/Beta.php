@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\PricingDiscovery\Domain\ValueObject;
+namespace Bayesian\PricingDiscovery\Domain\ValueObject;
 
 use Brick\Math\BigDecimal;
 use InvalidArgumentException;

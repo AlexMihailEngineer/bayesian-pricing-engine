@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace App\PricingDiscovery\Domain\Model;
+namespace Bayesian\PricingDiscovery\Domain\Model;
 
-use App\PricingDiscovery\Domain\ValueObject\Alpha;
-use App\PricingDiscovery\Domain\ValueObject\Beta;
+use Bayesian\PricingDiscovery\Domain\ValueObject\Alpha;
+use Bayesian\PricingDiscovery\Domain\ValueObject\Beta;
 use Brick\Math\BigDecimal;
 use Brick\Math\RoundingMode;
 

@@ -1,7 +1,6 @@
 <?php
 
-use App\Providers\AppServiceProvider;
-
 return [
-    AppServiceProvider::class,
+	// App\Providers\AppServiceProvider::class, // Create this if it's missing
+	Bayesian\PricingDiscovery\Infrastructure\Laravel\PricingDiscoveryServiceProvider::class,
 ];
