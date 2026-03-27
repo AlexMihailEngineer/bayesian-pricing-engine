@@ -1,0 +1,83 @@
+services:
+  # The PHP 8.4 Backend
+  app:
+    build:
+      context: .
+      dockerfile: docker/php/Dockerfile
+    container_name: bayesian_pricing_app
+    restart: unless-stopped
+    working_dir: /var/www
+    volumes:
+      - ./:/var/www:z
+    depends_on:
+      - db
+      - redis
+    networks:
+      - bayesian_network
+    user: "${UID}:${GID}"
+
+  # Nginx Web Server
+  web:
+    image: nginx:alpine
+    container_name: bayesian_pricing_web
+    restart: unless-stopped
+    ports:
+      - "8000:80"
+    volumes:
+      - ./:/var/www:z
+      - ./docker/nginx/conf.d:/etc/nginx/conf.d:z
+    depends_on:
+      - app
+    networks:
+      - bayesian_network
+
+  # PostgreSQL (Crucial for EXACT DECIMAL storage)
+  db:
+    image: postgres:17-alpine
+    container_name: bayesian_pricing_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: bayesian_pricing
+      POSTGRES_USER: devuser
+      POSTGRES_PASSWORD: devpassword
+    ports:
+      - "5432:5432"
+    volumes:
+      - bayesian_db_data:/var/lib/postgresql/data:z
+    networks:
+      - bayesian_network
+
+  # Redis (Crucial for Market Ingestion Streams)
+  redis:
+    image: redis:7-alpine
+    container_name: bayesian_pricing_redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    command: redis-server --appendonly yes
+    volumes:
+      - bayesian_redis_data:/data:z
+    networks:
+      - bayesian_network
+
+  # React 19 Frontend (Vite)
+  frontend:
+    image: node:22-alpine
+    container_name: bayesian_pricing_frontend
+    restart: unless-stopped
+    working_dir: /app
+    volumes:
+      - ./frontend:/app:z
+    ports:
+      - "5173:5173"
+    command: sh -c "npm install && npm run dev -- --host"
+    networks:
+      - bayesian_network
+
+networks:
+  bayesian_network:
+    driver: bridge
+
+volumes:
+  bayesian_db_data:
+  bayesian_redis_data:

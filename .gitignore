@@ -1,1 +1,35 @@
+# --- Dependencies ---
 /vendor
+/frontend/node_modules
+
+# --- Security & Credentials (CRITICAL) ---
+.env
+.env.backup
+.env.production
+phpright.json
+*.key
+
+# --- Laravel Framework Junk ---
+/storage/framework/cache/data/*
+/storage/framework/sessions/*
+/storage/framework/views/*
+/storage/logs/*
+/bootstrap/cache/*
+# Keep the directories but ignore the contents
+!/storage/framework/cache/data/.gitignore
+!/storage/framework/sessions/.gitignore
+!/storage/framework/views/.gitignore
+!/storage/logs/.gitignore
+!/bootstrap/cache/.gitignore
+
+# --- Frontend Build Artifacts ---
+/frontend/dist
+/frontend/build
+.eslintcache
+
+# --- OS & IDE Junk ---
+.DS_Store
+.idea/
+.vscode/
+*.swp
+.phpunit.result.cache
