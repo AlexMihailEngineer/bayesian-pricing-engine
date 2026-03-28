@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Bayesian\PricingDiscovery\Infrastructure\Http;
 
 use App\Http\Controllers\Controller;
-use App\Models\PricingExperimentEloquentModel;
+use Bayesian\PricingDiscovery\Infrastructure\Persistence\Eloquent\PricingExperimentEloquentModel;
 use Illuminate\Http\JsonResponse;
 
 class PricingRecommendationController extends Controller

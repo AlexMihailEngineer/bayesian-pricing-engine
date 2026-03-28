@@ -6,7 +6,7 @@ namespace Bayesian\PricingDiscovery\Infrastructure\Http;
 
 use App\Http\Controllers\Controller;
 use Bayesian\PricingDiscovery\Domain\Repository\PricingExperimentRepositoryInterface;
-use App\Models\PricingExperimentEloquentModel;
+use Bayesian\PricingDiscovery\Infrastructure\Persistence\Eloquent\PricingExperimentEloquentModel;
 use Illuminate\Http\JsonResponse;
 
 class PricingQueryController extends Controller

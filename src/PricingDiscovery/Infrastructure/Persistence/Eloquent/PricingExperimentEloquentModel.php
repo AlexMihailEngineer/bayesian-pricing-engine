@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Models;
+namespace Bayesian\PricingDiscovery\Infrastructure\Persistence\Eloquent;
 
 use Illuminate\Database\Eloquent\Model;
 

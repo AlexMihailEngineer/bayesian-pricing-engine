@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Bayesian\PricingDiscovery\Infrastructure\Persistence;
 
-use App\Models\PricingExperimentEloquentModel;
+use Bayesian\PricingDiscovery\Infrastructure\Persistence\Eloquent\PricingExperimentEloquentModel;
 use Bayesian\PricingDiscovery\Domain\Model\PricingExperiment;
 use Bayesian\PricingDiscovery\Domain\ValueObject\Alpha;
 use Bayesian\PricingDiscovery\Domain\ValueObject\Beta;
