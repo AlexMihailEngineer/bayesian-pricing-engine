@@ -59,6 +59,15 @@ class PricingExperiment
 		return $this->alpha->value->dividedBy($total, $scale, RoundingMode::HALF_UP);
 	}
 
+	/**
+	 * Returns the expected conversion rate as a precise string for safe 
+	 * serialization, event broadcasting, or persistence.
+	 */
+	public function getExpectedValueAsString(int $scale = 10): string
+	{
+		return (string) $this->getExpectedConversionRate($scale);
+	}
+
 	public function getExperimentId(): string
 	{
 		return $this->experimentId;

@@ -18,6 +18,7 @@ class EloquentPricingExperimentRepository implements PricingExperimentRepository
 	{
 		$eloquent = PricingExperimentEloquentModel::where('product_id', $productId)
 			->where('price_point', $price)
+			->lockForUpdate() // <-- CRITICAL ADDITION
 			->first();
 
 		return $eloquent ? $this->hydrator->toDomain($eloquent) : null;

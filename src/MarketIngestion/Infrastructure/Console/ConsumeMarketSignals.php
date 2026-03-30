@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Bayesian\MarketIngestion\Infrastructure\Console;
 
 use Bayesian\MarketIngestion\Infrastructure\Adapter\RedisStreamSalesDataAdapter;
-use Bayesian\MarketIngestion\Application\CommandHandler\IngestMarketSignalHandler;
+use Bayesian\PricingDiscovery\Application\CommandHandler\IngestMarketSignalHandler;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Redis;
 use InvalidArgumentException;

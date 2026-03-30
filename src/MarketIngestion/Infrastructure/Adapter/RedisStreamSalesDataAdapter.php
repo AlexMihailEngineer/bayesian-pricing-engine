@@ -4,41 +4,25 @@ declare(strict_types=1);
 
 namespace Bayesian\MarketIngestion\Infrastructure\Adapter;
 
-use Bayesian\MarketIngestion\Application\Command\IngestMarketSignal;
+// IMPORT THE COMMAND FROM THE TARGET BOUNDED CONTEXT
+use Bayesian\PricingDiscovery\Application\Command\IngestMarketSignalCommand;
+use DateTimeImmutable;
 use InvalidArgumentException;
 
 class RedisStreamSalesDataAdapter
 {
-	/**
-	 * Maps a raw Redis stream message to an IngestMarketSignal command.
-	 */
-	public function map(array $message): IngestMarketSignal
+	public function map(array $fields): IngestMarketSignalCommand
 	{
-		$this->validate($message);
-
-		return new IngestMarketSignal(
-			transactionId: (string) $message['transaction_id'],
-			productId: (string) $message['product_id'],
-			price: (string) $message['price'],
-			converted: (int)    $message['converted'],
-			occurredAt: (string) $message['occurred_at']
-		);
-	}
-
-	private function validate(array $data): void
-	{
-		$requiredFields = [
-			'transaction_id',
-			'product_id',
-			'price',
-			'converted',
-			'occurred_at'
-		];
-
-		foreach ($requiredFields as $field) {
-			if (!isset($data[$field]) || $data[$field] === '') {
-				throw new InvalidArgumentException("Missing or empty required field: {$field}");
-			}
+		if (!isset($fields['product_id'], $fields['price_point'])) {
+			throw new InvalidArgumentException("Missing required fields (product_id, price_point) in stream payload.");
 		}
+
+		return new IngestMarketSignalCommand(
+			productId: (string) $fields['product_id'],
+			price: (string) $fields['price_point'],
+			isConversion: (bool) ($fields['is_conversion'] ?? false),
+			signalId: (string) ($fields['signal_id'] ?? uniqid('sig_', true)),
+			occurredAt: new DateTimeImmutable($fields['timestamp'] ?? 'now')
+		);
 	}
 }
