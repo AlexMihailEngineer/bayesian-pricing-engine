@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Bayesian\MarketIngestion\Infrastructure\Console;
 
 use Illuminate\Console\Command;
@@ -29,14 +31,19 @@ class SimulateMarketTraffic extends Command
 
             // XADD stream_name ID ( * for auto-generated) key value ...
             Redis::executeRaw([
-                'XADD', 
-                'market_signals', 
-                '*', 
-                'transaction_id', $signal['transaction_id'],
-                'product_id', $signal['product_id'],
-                'price', $signal['price'],
-                'converted', $signal['converted'],
-                'occurred_at', $signal['occurred_at']
+                'XADD',
+                'market_signals',
+                '*',
+                'transaction_id',
+                $signal['transaction_id'],
+                'product_id',
+                $signal['product_id'],
+                'price',
+                $signal['price'],
+                'converted',
+                $signal['converted'],
+                'occurred_at',
+                $signal['occurred_at']
             ]);
 
             if ($delay > 0) {

@@ -1,10 +1,12 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Bayesian\MarketIngestion\Infrastructure\Console;
 
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Redis;
-use League\Csv\Reader;							
+use League\Csv\Reader;
 
 class IngestCsvToRedis extends Command
 {

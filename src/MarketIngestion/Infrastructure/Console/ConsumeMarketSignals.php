@@ -19,6 +19,11 @@ class ConsumeMarketSignals extends Command
 	private const STREAM_NAME = 'market_signals';
 	private const GROUP_NAME = 'sales_workers';
 
+	private const MAX_RETRIES = 3;
+
+	private const DLS_STREAM_NAME = 'market_signals_dead_letters';
+	private const RETRY_KEY_PREFIX = 'signal_retries:';
+
 	public function __construct(
 		private readonly RedisStreamSalesDataAdapter $adapter,
 		private readonly IngestMarketSignalHandler $handler
@@ -52,7 +57,7 @@ class ConsumeMarketSignals extends Command
 					'>'
 				]);
 
-				if (empty($results)) {
+				if (empty($results) || empty($results[0][1])) {
 					continue;
 				}
 
@@ -84,8 +89,9 @@ class ConsumeMarketSignals extends Command
 				'0'
 			]);
 
-			if (empty($results)) {
-				return;
+			if (empty($results) || empty($results[0][1])) {
+				$this->info("No more pending messages. Moving to real-time listening.");
+				break;
 			}
 
 			foreach ($results[0][1] as $message) {
@@ -99,25 +105,77 @@ class ConsumeMarketSignals extends Command
 
 	private function processSignal(string $id, array $fields): void
 	{
-		// Force terminal output immediately upon reading
-		$this->info("--> Incoming: {$id} | Product: {$fields['product_id']}");
+		$this->info("--> Incoming: {$id} | Product: " . ($fields['product_id'] ?? 'UNKNOWN'));
+
 		try {
 			// 1. Map raw Redis data to the Application Command via the Adapter (ACL)
 			$command = $this->adapter->map($fields);
 
-			// 2. Dispatch to the Handler (UpdateBayesianPrior)
+			// 2. Dispatch to the Handler
 			$this->handler->handle($command);
 
 			// 3. Acknowledge (ACK) only after successful processing
 			Redis::executeRaw(['XACK', self::STREAM_NAME, self::GROUP_NAME, $id]);
 
-			$this->line("<info>Processed:</info> Signal {$id} for Product {$fields['product_id']}");
+			// 4. Clean up any retry tracking counters
+			Redis::del(self::RETRY_KEY_PREFIX . $id);
+
+			$this->line("<info>Processed:</info> Signal {$id}");
 		} catch (InvalidArgumentException $e) {
-			$this->warn("Skipping malformed signal {$id}: " . $e->getMessage());
-			// In production, move to a Dead Letter Stream here
+			// Deterministic Failure: Malformed data will never succeed. Route to DLS immediately.
+			$this->warn("Malformed signal {$id}: " . $e->getMessage() . " -> Routing directly to DLS.");
+			$this->moveToDeadLetterStream($id, $fields, $e);
 		} catch (Throwable $e) {
+			// Transient Failure: Track retries, move to DLS if threshold exceeded.
 			$this->error("Failed to process signal {$id}: " . $e->getMessage());
+			$this->handleRetryOrDeadLetter($id, $fields, $e);
 		}
+	}
+
+	private function handleRetryOrDeadLetter(string $id, array $fields, Throwable $e): void
+	{
+		$retryKey = self::RETRY_KEY_PREFIX . $id;
+
+		// Increment the failure count atomically
+		$attempt = Redis::incr($retryKey);
+
+		if ($attempt === 1) {
+			// Set an expiration (e.g., 24 hours) to prevent memory leaks for resolved keys
+			Redis::expire($retryKey, 86400);
+		}
+
+		if ($attempt >= self::MAX_RETRIES) {
+			$this->error("Signal {$id} exceeded max retries ({$attempt}). Moving to DLS.");
+			$this->moveToDeadLetterStream($id, $fields, $e);
+			Redis::del($retryKey); // Clean up the tracker
+		} else {
+			$this->warn("Signal {$id} failed (Attempt {$attempt}/" . self::MAX_RETRIES . "). Retrying on next loop.");
+			// Do NOT XACK here. The message remains in the PEL and will be picked up by the drainPendingMessages loop.
+		}
+	}
+
+	private function moveToDeadLetterStream(string $id, array $fields, Throwable $e): void
+	{
+		// 1. Append debugging metadata to the original payload
+		$dlsPayload = array_merge($fields, [
+			'_original_id' => $id,
+			'_error_message' => $e->getMessage(),
+			'_failed_at' => now()->toIso8601String(),
+			'_exception_class' => get_class($e),
+		]);
+
+		// 2. Flatten associative array for the XADD raw command
+		$xaddArgs = ['XADD', self::DLS_STREAM_NAME, '*'];
+		foreach ($dlsPayload as $key => $value) {
+			$xaddArgs[] = $key;
+			$xaddArgs[] = is_array($value) ? json_encode($value) : (string) $value;
+		}
+
+		// 3. Write to the Dead Letter Stream
+		Redis::executeRaw($xaddArgs);
+
+		// 4. ACK the original stream to remove it from the PEL and stop the infinite loop
+		Redis::executeRaw(['XACK', self::STREAM_NAME, self::GROUP_NAME, $id]);
 	}
 
 	private function ensureConsumerGroupExists(): void
