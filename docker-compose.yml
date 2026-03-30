@@ -49,12 +49,13 @@ services:
 
   # Redis (Crucial for Market Ingestion Streams)
   redis:
-    image: redis:7-alpine
+    image: redis:8.6-alpine
     container_name: bayesian_pricing_redis
     restart: unless-stopped
     ports:
       - "6379:6379"
-    command: redis-server --appendonly yes
+    # New in 8.6: Enhanced AOF persistence settings are standard
+    command: redis-server --appendonly yes --aof-use-rdb-preamble yes
     volumes:
       - bayesian_redis_data:/data:z
     networks:

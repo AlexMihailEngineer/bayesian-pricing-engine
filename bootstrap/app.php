@@ -14,6 +14,11 @@ return Application::configure(basePath: dirname(__DIR__))
 	->withMiddleware(function (Middleware $middleware): void {
 		//
 	})
+	->withCommands([
+		\Bayesian\MarketIngestion\Infrastructure\Console\IngestCsvToRedis::class,
+		\Bayesian\MarketIngestion\Infrastructure\Console\ConsumeMarketSignals::class,
+		\Bayesian\MarketIngestion\Infrastructure\Console\SimulateMarketTraffic::class,
+	])
 	->withExceptions(function (Exceptions $exceptions): void {
 		//
 	})->create();
