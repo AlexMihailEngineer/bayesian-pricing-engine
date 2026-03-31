@@ -13,8 +13,14 @@ class RedisStreamSalesDataAdapter
 {
 	public function map(array $fields): IngestMarketSignalCommand
 	{
-		if (!isset($fields['product_id'], $fields['price_point'])) {
-			throw new InvalidArgumentException("Missing required fields (product_id, price_point) in stream payload.");
+		// Check if keys exist AND contain non-whitespace characters
+		$productId = trim($fields['product_id'] ?? '');
+		$pricePoint = trim($fields['price_point'] ?? '');
+
+		if ($productId === '' || $pricePoint === '') {
+			throw new InvalidArgumentException(
+				"Missing or empty required fields (product_id, price_point) in stream payload."
+			);
 		}
 
 		return new IngestMarketSignalCommand(

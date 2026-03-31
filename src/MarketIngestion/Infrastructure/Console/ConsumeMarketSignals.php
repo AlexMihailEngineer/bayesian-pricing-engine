@@ -181,10 +181,32 @@ class ConsumeMarketSignals extends Command
 	private function ensureConsumerGroupExists(): void
 	{
 		try {
-			// MKSTREAM ensures the stream is created if it doesn't exist
-			Redis::executeRaw(['XGROUP', 'CREATE', self::STREAM_NAME, self::GROUP_NAME, '$', 'MKSTREAM']);
-		} catch (Throwable $e) {
-			// Group already exists, ignore error
+			// Attempt to create the group from the beginning of the stream ('0')
+			// Using 'MKSTREAM' ensures the stream is created if it doesn't exist
+			Redis::executeRaw([
+				'XGROUP',
+				'CREATE',
+				self::STREAM_NAME,
+				self::GROUP_NAME,
+				'0',
+				'MKSTREAM'
+			]);
+
+			$this->info("Consumer group [" . self::GROUP_NAME . "] created successfully.");
+		} catch (\Throwable $e) {
+			$message = $e->getMessage();
+
+			// ONLY ignore if the error specifically says the group exists
+			if (str_contains($message, 'BUSYGROUP')) {
+				$this->line("<comment>Consumer group already exists. Skipping creation.</comment>", 'v');
+				return;
+			}
+
+			// For any other error (Connection, Authentication, Command Syntax), 
+			// we MUST halt the process.
+			$this->error("Failed to initialize Redis Consumer Group: " . $message);
+
+			throw $e;
 		}
 	}
 
